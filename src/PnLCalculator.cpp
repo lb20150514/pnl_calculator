@@ -24,10 +24,11 @@ void PnLCalculator::handle_tradeinfo(const TradeInfo &trade_info)
         int changed_vol = trade_info.vol;
         double pnl = 0.0;
         auto beg = accounting_scheme_ == AccountingScheme::FIFO ? position_infos.begin() : position_infos.end();
-        auto end = accounting_scheme_ == AccountingScheme::FIFO ? position_infos.begin() : position_infos.end();
-        auto iter = accounting_scheme_ == AccountingScheme::FIFO ? beg : (--beg);
-        while (iter != position_infos.end() && changed_vol > 0)
+        auto end = accounting_scheme_ == AccountingScheme::FIFO ? position_infos.end() : position_infos.begin();
+        auto iter = beg;
+        while (iter != end && changed_vol > 0)
         {
+            iter = accounting_scheme_ == AccountingScheme::FIFO ? iter : (--iter);
             if (iter->vol > changed_vol)
             {
                 pnl += (trade_info.price - iter->price) * (changed_vol * (trade_info.is_bid ? -1 : 1));
@@ -46,8 +47,6 @@ void PnLCalculator::handle_tradeinfo(const TradeInfo &trade_info)
                 changed_vol -= iter->vol;
                 iter = position_infos.erase(iter);
             }
-
-            iter = accounting_scheme_ == AccountingScheme::FIFO ? iter : (--iter);
         }
 
         if (changed_vol > 0)
